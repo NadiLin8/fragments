@@ -11,5 +11,8 @@
     "url": "git+https://github.com/NadiLin8/fragments.git"
   },
   "author": "Nadi",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "3.5.3"
+  }
 }
