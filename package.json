@@ -31,6 +31,7 @@
   "dependencies": {
     "aws-jwt-verify": "^5.1.0",
     "compression": "^1.8.0",
+    "content-type": "^1.0.5",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -38,6 +39,7 @@
     "http-auth": "^4.2.1",
     "http-auth-passport": "^1.0.7",
     "passport": "^0.7.0",
+    "passport-http": "^0.3.0",
     "passport-http-bearer": "^1.0.1",
     "pino": "^9.6.0",
     "pino-http": "^10.4.0",
