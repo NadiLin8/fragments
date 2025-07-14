@@ -1,40 +1,32 @@
-# Dockerfile for fragments microservice
-# This file defines instructions to build a Docker image for our Node.js service
+# Multi-stage build for smaller image
+FROM node:18-alpine AS dependencies
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Use a specific version of Node.js as our base image
-FROM node:22.12.0
-
-# Add metadata about the image
-LABEL maintainer=" Nadi <nalin@myseneca.ca>"
-LABEL description="Fragments node.js microservice"
-
-# Set environment variables
-# Default port for our service
-ENV PORT=8080
-
-# Reduce npm spam when installing within Docker
-ENV NPM_CONFIG_LOGLEVEL=warn
-
-# Disable colour when run inside Docker
-ENV NPM_CONFIG_COLOR=false
-
-# Create and set the working directory
+FROM node:18-alpine AS runtime
 WORKDIR /app
 
-# Copy package files for dependency installation
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S fragments -u 1001
+
+# Copy production dependencies
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Copy application files
 COPY package*.json ./
-
-# Install node dependencies
-RUN npm install
-
-# Copy source code
 COPY ./src ./src
-
-# Copy the HTPASSWD file (needed for basic auth)
 COPY ./tests/.htpasswd ./tests/.htpasswd
 
-# Expose the port our app runs on
-EXPOSE 8080
+# Change ownership and switch to non-root user
+RUN chown -R fragments:nodejs /app
+USER fragments
 
-# Command to start the container
-CMD npm start
+# Environment variables
+ENV PORT=8080
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_COLOR=false
+
+EXPOSE 8080
+CMD ["npm", "start"]
