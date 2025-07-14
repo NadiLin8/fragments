@@ -1,58 +1,84 @@
-# .github/workflows/ci.yml
+name: CI
 
-# Continuous Integration (CI) Workflow
-name: ci
-
-# This workflow will run whenever we push commits to the `main` branch, or
-# whenever there's a pull request to the `main` branch
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   lint:
-    # Give your job a name that will show up in the GitHub Actions web UI
     name: ESLint
-    # We'll run this on a Linux (Ubuntu) VM, since we'll deploy on Linux too
     runs-on: ubuntu-latest
-    # We run these steps one after the other, and if any fail, we stop the process
+    
     steps:
-      # https://github.com/actions/checkout
-      - name: Check out code
-        uses: actions/checkout@v4
+    - name: Check out code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run ESLint
+      run: npm run lint
 
-      # https://github.com/actions/setup-node
-      - name: Setup node
-        uses: actions/setup-node@v4
+  # Lint our Dockerfile using Hadolint
+  dockerfile-lint:
+    name: Dockerfile Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hadolint/hadolint-action@v3.1.0
         with:
-          # Use node LTS
-          node-version: 'lts/*'
-          # Cache npm dependencies so they don't have to be downloaded next time
-          cache: 'npm'
+          dockerfile: Dockerfile
 
-      - name: Install node dependencies
-        # Use `ci` vs. `install` for faster, reliable, reproducible builds
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-  unit-tests:
+  test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+    - name: Check out code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run unit tests
+      run: npm test
+    
+    - name: Run test coverage
+      run: npm run coverage
 
-      - name: Setup node
-        uses: actions/setup-node@v4
+  docker-hub:
+    name: Build and Push to Docker Hub
+    needs: [lint, dockerfile-lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
         with:
-          node-version: 'lts/*'
-          cache: 'npm'
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Install node dependencies and run Tests
-        run: npm install-ci-test
+      - name: Build and push
+        env:
+          DOCKERHUB_REPO: nadilin8/fragments
+          SHA_TAG: sha-${{ github.sha }}
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ env.DOCKERHUB_REPO }}:${{ env.SHA_TAG }}, ${{ env.DOCKERHUB_REPO }}:main, ${{ env.DOCKERHUB_REPO }}:latest
