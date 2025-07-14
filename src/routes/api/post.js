@@ -14,9 +14,9 @@ async function createFragment(req, res) {
     }
     
     let type;
-    try {
+try {
       ({ type } = contentType.parse(contentTypeHeader));
-    } catch (err) {
+    } catch {  
       return res.status(400).json(createErrorResponse(400, 'Invalid Content-Type header'));
     }
     
@@ -31,10 +31,10 @@ async function createFragment(req, res) {
     }
     
     // Add JSON validation for application/json type
-    if (type === 'application/json') {
+if (type === 'application/json') {
       try {
         JSON.parse(req.body.toString());
-      } catch (err) {
+      } catch { 
         logger.warn({ type }, 'Invalid JSON format in fragment data');
         return res.status(400).json(createErrorResponse(400, 'Invalid JSON format'));
       }
