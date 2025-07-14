@@ -11,7 +11,6 @@ describe('Fragment', () => {
         created: '2021-01-01T00:00:00.000Z',
         updated: '2021-01-01T00:00:00.000Z'
       });
-
       expect(fragment.id).toBe('test-id');
       expect(fragment.ownerId).toBe('user123');
       expect(fragment.type).toBe('text/plain');
@@ -23,7 +22,6 @@ describe('Fragment', () => {
         ownerId: 'user123',
         type: 'text/plain'
       });
-
       expect(fragment.id).toBeDefined();
       expect(fragment.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     });
@@ -39,8 +37,8 @@ describe('Fragment', () => {
     test('should throw error for unsupported type', () => {
       expect(() => new Fragment({
         ownerId: 'user123',
-        type: 'application/json'
-      })).toThrow('Unsupported type: application/json');
+        type: 'image/png'
+      })).toThrow('Unsupported type: image/png');
     });
   });
 
@@ -49,9 +47,17 @@ describe('Fragment', () => {
       expect(Fragment.isSupportedType('text/plain')).toBe(true);
     });
 
+    test('should return true for application/json', () => {
+      expect(Fragment.isSupportedType('application/json')).toBe(true);
+    });
+
+    test('should return true for text/markdown', () => {
+      expect(Fragment.isSupportedType('text/markdown')).toBe(true);
+    });
+
     test('should return false for unsupported types', () => {
-      expect(Fragment.isSupportedType('application/json')).toBe(false);
       expect(Fragment.isSupportedType('image/png')).toBe(false);
+      expect(Fragment.isSupportedType('video/mp4')).toBe(false);
     });
   });
 

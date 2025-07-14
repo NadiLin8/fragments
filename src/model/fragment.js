@@ -99,16 +99,19 @@ class Fragment {
   static isSupportedType(value) {
     const supportedTypes = [
       'text/plain',
-      'text/plain; charset=utf-8'
+      'text/plain; charset=utf-8',
+      'text/markdown',
+      'text/html',
+      'application/json'
     ];
-    
-    try {
+  
+   try {
       const { type } = contentType.parse(value);
       return supportedTypes.includes(type) || supportedTypes.includes(value);
-    } catch (error) {
+   } catch (error) {
       return false;
-    }
-  }
+   }
+ }
 }
 
 module.exports = Fragment;

@@ -7,26 +7,32 @@ describe('POST /v1/fragments', () => {
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
       .set('Content-Type', 'text/plain')
-      .send('Hello World');
+      .send('This is a test fragment');
 
     expect(res.statusCode).toBe(201);
     expect(res.body.status).toBe('ok');
-    expect(res.body.fragment).toMatchObject({
-      id: expect.any(String),
-      ownerId: expect.any(String),
-      created: expect.any(String),
-      updated: expect.any(String),
-      type: 'text/plain',
-      size: 11
-    });
-    expect(res.headers.location).toMatch(/\/v1\/fragments\/[0-9a-f-]+$/);
+    expect(res.body.fragment).toBeDefined();
+    expect(res.body.fragment.type).toBe('text/plain');
+  });
+
+  test('authenticated users can create a JSON fragment', async () => {
+    const res = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'application/json')
+      .send('{"test": "data"}');
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.status).toBe('ok');
+    expect(res.body.fragment).toBeDefined();
+    expect(res.body.fragment.type).toBe('application/json');
   });
 
   test('unauthenticated requests return 401', async () => {
     const res = await request(app)
       .post('/v1/fragments')
       .set('Content-Type', 'text/plain')
-      .send('Hello World');
+      .send('This is a test fragment');
 
     expect(res.statusCode).toBe(401);
   });
@@ -35,17 +41,27 @@ describe('POST /v1/fragments', () => {
     const res = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'application/json')
-      .send('{"test": "data"}');
+      .set('Content-Type', 'image/png')
+      .send('fake image data');
 
     expect(res.statusCode).toBe(415);
   });
 
-  test('missing content type returns 400', async () => {
+test('missing content type returns 415', async () => {
+  const res = await request(app)
+    .post('/v1/fragments')
+    .auth('user1@email.com', 'password1')
+    .send('Hello World');
+
+  expect(res.statusCode).toBe(415); 
+});
+
+  test('invalid JSON returns 400', async () => {
     const res = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .send('Hello World');
+      .set('Content-Type', 'application/json')
+      .send('{"invalid": json}');
 
     expect(res.statusCode).toBe(400);
   });

@@ -7,9 +7,9 @@ async function createFragment(req, res) {
   try {
     const ownerId = req.user.id;
     
-    // Check Content-Type header first
+    // Check Content-Type header first - BEFORE any other checks
     const contentTypeHeader = req.get('Content-Type');
-    if (!contentTypeHeader) {
+    if (!contentTypeHeader || contentTypeHeader.trim() === '') {
       return res.status(400).json(createErrorResponse(400, 'Content-Type header is required'));
     }
     
@@ -25,8 +25,19 @@ async function createFragment(req, res) {
       return res.status(415).json(createErrorResponse(415, `Unsupported Media Type: ${type}`));
     }
     
+    // Check if body is Buffer AFTER Content-Type validation
     if (!Buffer.isBuffer(req.body)) {
       return res.status(415).json(createErrorResponse(415, 'Unsupported Media Type'));
+    }
+    
+    // Add JSON validation for application/json type
+    if (type === 'application/json') {
+      try {
+        JSON.parse(req.body.toString());
+      } catch (err) {
+        logger.warn({ type }, 'Invalid JSON format in fragment data');
+        return res.status(400).json(createErrorResponse(400, 'Invalid JSON format'));
+      }
     }
     
     logger.info({ ownerId, type, size: req.body.length }, 'Creating new fragment');
