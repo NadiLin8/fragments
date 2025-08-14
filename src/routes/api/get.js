@@ -1,21 +1,18 @@
 const { createSuccessResponse, createErrorResponse } = require('../../response');
-const Fragment = require('../../model/fragment');
-const logger = require('../../logger');
+const { Fragment } = require('../../model/fragment');
 
-async function getFragments(req, res) {
+module.exports = async (req, res) => {
   try {
-    const ownerId = req.user.id;
     const expand = req.query.expand === '1';
     
-    logger.debug({ ownerId, expand }, 'Getting fragments for user');
-    
-    const fragments = await Fragment.byUser(ownerId, expand);
-    
-    res.json(createSuccessResponse({ fragments }));
+    if (expand) {
+      const fragments = await Fragment.byUser(req.user, true);
+      res.status(200).json(createSuccessResponse({ fragments }));
+    } else {
+      const fragmentIds = await Fragment.byUser(req.user, false);
+      res.status(200).json(createSuccessResponse({ fragments: fragmentIds }));
+    }
   } catch (error) {
-    logger.error({ error: error.message }, 'Error getting fragments');
-    res.status(500).json(createErrorResponse(500, 'Internal Server Error'));
+    res.status(500).json(createErrorResponse(500, 'Unable to get fragments'));
   }
-}
-
-module.exports = getFragments;
+};

@@ -1,4 +1,4 @@
-const Fragment = require('../../src/model/fragment');
+const { Fragment } = require('../../src/model/fragment');
 
 describe('Fragment', () => {
   describe('Fragment(options)', () => {

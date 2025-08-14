@@ -1,23 +1,22 @@
 const contentType = require('content-type');
 const { createSuccessResponse, createErrorResponse } = require('../../response');
-const Fragment = require('../../model/fragment');
+const { Fragment } = require('../../model/fragment');
 const logger = require('../../logger');
 
 async function createFragment(req, res) {
   try {
-    const ownerId = req.user.id;
+    const ownerId = req.user;
     
-    // Check Content-Type header first - BEFORE any other checks
     const contentTypeHeader = req.get('Content-Type');
     if (!contentTypeHeader || contentTypeHeader.trim() === '') {
-      return res.status(400).json(createErrorResponse(400, 'Content-Type header is required'));
+      return res.status(415).json(createErrorResponse(415, 'Content-Type header is required'));
     }
     
     let type;
-try {
+    try {
       ({ type } = contentType.parse(contentTypeHeader));
     } catch {  
-      return res.status(400).json(createErrorResponse(400, 'Invalid Content-Type header'));
+      return res.status(415).json(createErrorResponse(415, 'Invalid Content-Type header'));
     }
     
     if (!Fragment.isSupportedType(type)) {
@@ -25,13 +24,11 @@ try {
       return res.status(415).json(createErrorResponse(415, `Unsupported Media Type: ${type}`));
     }
     
-    // Check if body is Buffer AFTER Content-Type validation
     if (!Buffer.isBuffer(req.body)) {
       return res.status(415).json(createErrorResponse(415, 'Unsupported Media Type'));
     }
     
-    // Add JSON validation for application/json type
-if (type === 'application/json') {
+    if (type === 'application/json') {
       try {
         JSON.parse(req.body.toString());
       } catch { 

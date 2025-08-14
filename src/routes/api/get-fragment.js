@@ -1,26 +1,34 @@
 const { createErrorResponse } = require('../../response');
-const Fragment = require('../../model/fragment');
-const logger = require('../../logger');
+const { Fragment } = require('../../model/fragment');
+const FragmentConverter = require('../../model/fragment-converter');
+const path = require('path');
 
-async function getFragment(req, res) {
+module.exports = async (req, res) => {
   try {
     const { id } = req.params;
-    const ownerId = req.user.id;
     
-    logger.debug({ ownerId, id }, 'Getting fragment');
+    const ext = path.extname(id);
+    const fragmentId = ext ? path.basename(id, ext) : id;
     
-    const fragment = await Fragment.byId(ownerId, id);
+    const fragment = await Fragment.byId(req.user, fragmentId);
     const data = await fragment.getData();
     
-    res.type(fragment.type);
-    res.send(data);
-  } catch (error) {
-    if (error.message === 'Fragment not found') {
-      return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+    if (!ext) {
+      res.setHeader('Content-Type', fragment.type);
+      return res.status(200).send(data);
     }
-    logger.error({ error: error.message }, 'Error getting fragment');
-    res.status(500).json(createErrorResponse(500, 'Internal Server Error'));
-  }
-}
 
-module.exports = getFragment;
+    if (FragmentConverter.isValidConversion(fragment.type, ext)) {
+      const converter = new FragmentConverter();
+      const converted = converter.convert(data, fragment.type, ext);
+      res.setHeader('Content-Type', converted.contentType);
+      return res.status(200).send(converted.data);
+    }
+
+    res.setHeader('Content-Type', 'text/plain');
+    res.status(200).send(data);
+    
+  } catch (error) {
+    res.status(404).json(createErrorResponse(404, 'Fragment not found'));
+  }
+};

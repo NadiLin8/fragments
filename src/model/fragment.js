@@ -37,9 +37,8 @@ class Fragment {
   }
 
   static async byUser(ownerId, expand = false) {
-    logger.debug({ ownerId, expand }, 'Fragment.byUser()');
-    return listFragments(ownerId, expand);
-  }
+  return listFragments(ownerId, expand);
+}
 
   static async byId(ownerId, id) {
     logger.debug({ ownerId, id }, 'Fragment.byId()');
@@ -114,4 +113,4 @@ static isSupportedType(value) {
 }
 }
 
-module.exports = Fragment;
+module.exports.Fragment = Fragment;
