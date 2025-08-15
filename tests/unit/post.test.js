@@ -41,7 +41,7 @@ describe('POST /v1/fragments', () => {
     const res = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'image/png')
+      .set('Content-Type', 'image/mp4')
       .send('fake image data');
 
     expect(res.statusCode).toBe(415);

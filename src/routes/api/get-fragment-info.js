@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
     }
 
     res.status(200).json(createSuccessResponse({ fragment }));
-  } catch (error) {
+  } catch {
     res.status(500).json(createErrorResponse(500, 'Unable to get fragment info'));
   }
 };

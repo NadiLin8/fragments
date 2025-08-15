@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
       const fragmentIds = await Fragment.byUser(req.user, false);
       res.status(200).json(createSuccessResponse({ fragments: fragmentIds }));
     }
-  } catch (error) {
+  } catch {
     res.status(500).json(createErrorResponse(500, 'Unable to get fragments'));
   }
 };

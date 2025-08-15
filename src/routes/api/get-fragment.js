@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
     res.setHeader('Content-Type', 'text/plain');
     res.status(200).send(data);
     
-  } catch (error) {
+  } catch {
     res.status(404).json(createErrorResponse(404, 'Fragment not found'));
   }
 };

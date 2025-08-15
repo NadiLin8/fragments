@@ -37,14 +37,14 @@ class Fragment {
   }
 
   static async byUser(ownerId, expand = false) {
-  return listFragments(ownerId, expand);
-}
+    return listFragments(ownerId, expand);
+  }
 
   static async byId(ownerId, id) {
     logger.debug({ ownerId, id }, 'Fragment.byId()');
     const fragment = await readFragment(ownerId, id);
     if (!fragment) {
-      throw new Error(`Fragment not found`);
+     return undefined;  // This allows 404 handling in routes
     }
     return new Fragment(fragment);
   }
@@ -69,12 +69,12 @@ class Fragment {
     if (!Buffer.isBuffer(data)) {
       throw new Error('data must be a Buffer');
     }
-    
+
     this.size = data.length;
     this.updated = new Date().toISOString();
-    
+
     logger.debug({ id: this.id, ownerId: this.ownerId, size: this.size }, 'Fragment.setData()');
-    
+
     await writeFragmentData(this.ownerId, this.id, data);
     await this.save();
   }
@@ -89,28 +89,43 @@ class Fragment {
   }
 
   get formats() {
-    if (this.mimeType === 'text/plain') {
+    const type = this.mimeType;
+    
+    if (type === 'text/plain') {
       return ['text/plain'];
+    } else if (type === 'text/markdown') {
+      return ['text/markdown', 'text/html', 'text/plain'];
+    } else if (type === 'text/html') {
+      return ['text/html', 'text/plain'];
+    } else if (type === 'application/json') {
+      return ['application/json', 'text/plain'];
+    } else if (type.startsWith('image/')) {
+      return ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
     }
-    return [];
+    
+    return [type];
   }
 
-static isSupportedType(value) {
-  const supportedTypes = [
-    'text/plain',
-    'text/plain; charset=utf-8',
-    'text/markdown',
-    'text/html',
-    'application/json'
-  ];
+  static isSupportedType(value) {
+    const supportedTypes = [
+      'text/plain',
+      'text/plain; charset=utf-8',
+      'text/markdown',
+      'text/html',
+      'application/json',
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+      'image/gif'
+    ];
 
-  try {
-    const { type } = contentType.parse(value);
-    return supportedTypes.includes(type) || supportedTypes.includes(value);
-  } catch {  
-    return false;
+    try {
+      const { type } = contentType.parse(value);
+      return supportedTypes.includes(type) || supportedTypes.includes(value);
+    } catch {
+      return false;
+    }
   }
-}
 }
 
 module.exports.Fragment = Fragment;
